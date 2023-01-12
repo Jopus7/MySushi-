@@ -1,0 +1,53 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-3">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">MySushi</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+         <a class="nav-link active" aria-current="page" href="{% url 'sushi:product_list' %}">Home</a>
+        </li>
+         <li class="nav-item">
+         <a class="nav-link active" href="{% url 'sushi:product_list' %}">Menu</a>
+        </li>
+
+          {% if user.is_authenticated %}
+          <li class="nav-item">
+         <a class="nav-link active" href="{% url 'logout' %}">Log Out {{ user.username }}</a>
+        </li>
+              <li class="nav-item">
+         <a class="nav-link active" href="{% url 'sushi:cart_detail' %}">Cart</a>
+        </li>
+              {% else %}
+        <li class="nav-item">
+         <a class="nav-link active" aria-current="page" href="{% url 'login' %}">Login</a>
+        </li>
+              <li class="nav-item">
+         <a class="nav-link active" aria-current="page" href="{% url 'sushi:signup' %}">Sign Up</a>
+        </li>
+          {% endif %}
+
+            <li>
+          <a class="nav-link active" aria-current="page">
+              {% with total_items=cart|length %}
+                  {% if total_items > 0 %}
+                      Your cart:
+                      <a href="{% url "sushi:cart_detail" %}">
+                          {{ total_items }} item{{ total_items|pluralize }},
+                          {{ cart.get_total_price }} zł
+                      </a>
+                  {% else %}
+                      Your cart is empty.
+                  {% endif %}
+              {% endwith %}
+          </a>
+      </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
