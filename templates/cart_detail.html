@@ -1,0 +1,68 @@
+{% extends 'menu.html' %}
+{% load static %}
+
+{% block title %}Cart{% endblock %}
+
+
+{% block content %}
+
+<div class="dashboard-content border-dashed p-3 m-4 view-height">
+
+    <div class="row border-bottom border-3 p-1 m-1">
+        <div class="col noPadding">
+            <h3 class="color-header text-uppercase">Cart</h3>
+        </div>
+        <div class="col d-flex justify-content-end mb-2 noPadding">
+        </div>
+    </div>
+    <div class="schedules-content">
+        <table class="table border-bottom">
+            <thead>
+            <tr class="d-flex">
+                <th hidden="hidden" class="col-1">ID</th>
+                <th class="col-2">PRODUKT</th>
+                <th class="col-2">ILOŚĆ</th>
+                <th class="col-2">USUŃ</th>
+                <th class="col-3">CENA JEDNOSTKOWA</th>
+                <th class="col-2">KWOTA</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in cart %}
+                {% with product=item.product %}
+                    <tr>
+                        <td>{{ product.name }}</td>
+                        <td>
+                            <form action="{% url 'sushi:cart_add' product.id %}" method="post">
+                                {{ item.update_quantity_form.quantity }}
+                                {{ item.update_quantity_form.override }}
+                                <input type="submit" value="Zmień">
+                                {% csrf_token %}
+                            </form>
+                        </td>
+                        <td>
+
+                          <form action="{% url "sushi:cart_remove" product.id %}" method="post">
+                            <input type="submit" value="Usuń">
+                            {% csrf_token %}
+                          </form>
+                        </td>
+
+                        <td class="num">{{ item.price }} zł</td>
+                        <td class="num">{{ item.total_price }} zł</td>
+                    </tr>
+                {% endwith %}
+            {% endfor %}
+            <tr class="total">
+                <td>Wartość całkowita</td>
+                <td colspan="4"></td>
+                <td class="num">{{ cart.get_total_price }} zł</td>
+            </tr>
+            </tbody>
+        </table>
+    <p class="text-right">
+        <a href="{% url 'sushi:product_list' %}" class="button light">Kontynuuj zakupy</a>
+        <a href="{% url 'sushi:order_create' %}" class="button">Do kasy</a>
+    </p>
+
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Categories{% endblock %}
+
+{% block content %}
+
+<div class="btn-group btn-group-lg" role="group" aria-label="Large button group">
+        <a href="{% url 'sushi:nigiri' %} " class="btn btn-outline-info" aria-current="page">Nigiri</a>
+        <a href="{% url 'sushi:hosomaki' %} " class="btn btn-outline-info" aria-current="page">Hosomaki</a>
+        <a href="{% url 'sushi:futomaki' %} " class="btn btn-outline-info" aria-current="page">Futomaki</a>
+        <a href="{% url 'sushi:uramaki' %} " class="btn btn-outline-info" aria-current="page">Uramaki</a>
+        <a href="{% url 'sushi:extras' %} " class="btn btn-outline-info" aria-current="page">Extras</a>
+    </div>
+
+
+{% endblock %}
