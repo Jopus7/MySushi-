@@ -87,7 +87,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'foodapp',
         'USER': 'postgres',
-        'PASSWORD': 'coderslab',
+        'PASSWORD': 'password',
         'HOST': 'localhost'
     }
 }
