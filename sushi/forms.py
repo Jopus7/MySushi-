@@ -1,7 +1,7 @@
 from django import forms
 
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
-from .models import CustomUser, Order, Address
+from .models import CustomUser, Order, Address, Payment
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -45,6 +45,11 @@ class OrderCreateForm(forms.ModelForm):
         label='Adres dostawy',
         required=True
     )
+    payment_method = forms.ChoiceField(
+        choices=Payment._meta.get_field('method').choices,
+        label="Metoda płatności",
+        required=True
+    )
     class Meta:
         model = Order
         fields = ['delivery_address']
@@ -53,3 +58,4 @@ class AddressForm(forms.ModelForm):
     class Meta:
         model = Address
         fields = ['street', 'city', 'zip_code', 'country']
+

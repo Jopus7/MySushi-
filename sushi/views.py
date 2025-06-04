@@ -5,10 +5,12 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-from django.views.generic import CreateView
+from django.views.generic import CreateView, TemplateView
 from .forms import CustomUserCreationForm, CartAddProductForm, OrderCreateForm, AddressForm
-from .models import Product, Category, Cart, CartItem, OrderItem, Order
+from .models import Product, Category, Cart, CartItem, OrderItem, Order, Payment
 
+class HomeView(TemplateView):
+    template_name = 'home.html'
 
 def product_list(request, category_slug=None):
     category = None
@@ -102,6 +104,15 @@ def order_create(request):
                     quantity=item.quantity,
                     price=item.product.price
                 )
+
+            # Utwórz obiekt Payment
+            Payment.objects.create(
+                order=order,
+                amount=order.get_total_cost(),
+                method=form.cleaned_data['payment_method'],
+                status='pending'
+            )
+
             cart.items.all().delete()
             return redirect('sushi:order_success')
     else:
@@ -110,14 +121,15 @@ def order_create(request):
 
     return render(request, 'order_create.html', {
         'form': form,
-        'items': cart.items.all(),  # ← TO MUSI BYĆ
-        'total_cost': cart.get_total_cost()  # ← i to
+        'items': cart.items.all(),
+        'total_cost': cart.get_total_cost()
     })
 
 
 @login_required
 def order_success(request):
-    return render(request, 'order_success.html')
+    order = Order.objects.filter(user=request.user).latest('created')
+    return render(request, 'order_success.html', {'order': order})
 
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm

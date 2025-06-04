@@ -4,6 +4,12 @@
   <div class="container mt-5 text-center">
     <h2>Dziękujemy za zamówienie! 🍣</h2>
     <p>Twoje zamówienie zostało pomyślnie złożone.</p>
+    <h2>Dziękujemy za zamówienie!</h2>
+
+    <p><strong>Status płatności:</strong> {{ order.payment.get_status_display }}</p>
+    <p><strong>Metoda płatności:</strong> {{ order.payment.get_method_display }}</p>
+    <p><strong>Kwota:</strong> {{ order.payment.amount }} zł</p>
+
     <a href="{% url 'sushi:product_list' %}" class="btn btn-primary mt-3">Wróć do menu</a>
   </div>
 {% endblock %}
