@@ -1,68 +1,66 @@
 {% extends 'menu.html' %}
 {% load static %}
 
-{% block title %}Cart{% endblock %}
-
+{% block title %}Koszyk{% endblock %}
 
 {% block content %}
-
 <div class="dashboard-content border-dashed p-3 m-4 view-height">
 
     <div class="row border-bottom border-3 p-1 m-1">
         <div class="col noPadding">
-            <h3 class="color-header text-uppercase">Cart</h3>
-        </div>
-        <div class="col d-flex justify-content-end mb-2 noPadding">
+            <h3 class="color-header text-uppercase">Twój koszyk</h3>
         </div>
     </div>
-    <div class="schedules-content">
-        <table class="table border-bottom">
-            <thead>
-            <tr class="d-flex">
-                <th hidden="hidden" class="col-1">ID</th>
-                <th class="col-2">PRODUKT</th>
-                <th class="col-2">ILOŚĆ</th>
-                <th class="col-2">USUŃ</th>
-                <th class="col-3">CENA JEDNOSTKOWA</th>
-                <th class="col-2">KWOTA</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for item in cart %}
-                {% with product=item.product %}
-                    <tr>
-                        <td>{{ product.name }}</td>
-                        <td>
-                            <form action="{% url 'sushi:cart_add' product.id %}" method="post">
-                                {{ item.update_quantity_form.quantity }}
-                                {{ item.update_quantity_form.override }}
-                                <input type="submit" value="Zmień">
-                                {% csrf_token %}
-                            </form>
-                        </td>
-                        <td>
 
-                          <form action="{% url "sushi:cart_remove" product.id %}" method="post">
-                            <input type="submit" value="Usuń">
-                            {% csrf_token %}
-                          </form>
-                        </td>
+    {% if items %}
+    <table class="table border-bottom mt-4">
+        <thead class="table-dark">
+        <tr class="d-flex">
+            <th class="col-3">Produkt</th>
+            <th class="col-3">Ilość</th>
+            <th class="col-2">Cena</th>
+            <th class="col-2">Kwota</th>
+            <th class="col-2">Usuń</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in items %}
+        <tr class="d-flex align-items-center">
+            <td class="col-3">{{ item.product.name }}</td>
+            <td class="col-3">
+                <form method="post" action="{% url 'sushi:cart_add' item.product.id %}" class="d-flex">
+                    {% csrf_token %}
+                    <input type="hidden" name="override" value="true">
+                    <input type="number" name="quantity" value="{{ item.quantity }}" min="0" class="form-control me-2" style="max-width: 80px;">
+                    <button type="submit" class="btn btn-outline-primary btn-sm">Zmień</button>
+                </form>
+            </td>
+            <td class="col-2">{{ item.product.price }} zł</td>
+            <td class="col-2">{{ item.get_cost }} zł</td>
+            <td class="col-2">
+                <form method="post" action="{% url 'sushi:cart_remove' item.product.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">🗑</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        <tr class="d-flex">
+            <td class="col-3 fw-bold">Wartość całkowita:</td>
+            <td class="col-9 fw-bold text-end">{{ total_cost }} zł</td>
+        </tr>
+        </tbody>
+    </table>
 
-                        <td class="num">{{ item.price }} zł</td>
-                        <td class="num">{{ item.total_price }} zł</td>
-                    </tr>
-                {% endwith %}
-            {% endfor %}
-            <tr class="total">
-                <td>Wartość całkowita</td>
-                <td colspan="4"></td>
-                <td class="num">{{ cart.get_total_price }} zł</td>
-            </tr>
-            </tbody>
-        </table>
-    <p class="text-right">
-        <a href="{% url 'sushi:product_list' %}" class="button light">Kontynuuj zakupy</a>
-        <a href="{% url 'sushi:order_create' %}" class="button">Do kasy</a>
-    </p>
-
+    <div class="mt-3 text-end">
+        <a href="{% url 'sushi:product_list' %}" class="btn btn-secondary me-2">Kontynuuj zakupy</a>
+        <a href="{% url 'sushi:order_create' %}" class="btn btn-success">Przejdź do zamówienia</a>
+    </div>
+    {% else %}
+        <p class="text-center mt-4">🛒 Twój koszyk jest pusty.</p>
+        <div class="text-center mt-3">
+            <a href="{% url 'sushi:product_list' %}" class="btn btn-primary">Przeglądaj produkty</a>
+        </div>
+    {% endif %}
+</div>
 {% endblock %}

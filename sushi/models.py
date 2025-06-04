@@ -39,6 +39,7 @@ class Product(models.Model):
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     available = models.BooleanField(default=True)
+    stock_quantity = models.PositiveIntegerField(default=0)
 
     def get_absolute_url(self):
         return reverse('sushi:product_detail', args=[self.id],)
@@ -59,20 +60,39 @@ class Cart(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def get_total_cost(self):
+        return sum(item.get_cost() for item in self.items.select_related('product'))
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def get_cost(self):
+        return self.product.price * self.quantity
+    
+
+    def __str__(self):
+        return f"{self.quantity} x {self.product.name}"
+
 
 class Order(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    table_number = models.IntegerField()
     products = models.ManyToManyField(Product, through='OrderItem')
     delivered = models.BooleanField(default=False)
     paid = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
+    delivery_address = models.ForeignKey('Address', on_delete=models.SET_NULL, null=True, blank=True)
+
 
     class Meta:
         ordering = ('-created',)
 
     def __str__(self):
         return f"Order {self.id}"
+    
+    def get_total_cost(self):
+        return sum(item.get_cost() for item in self.items.all() or [])
 
     def get_total_cost(self):
         return sum(item.get_cost() for item in self.items.all())
@@ -89,3 +109,23 @@ class OrderItem(models.Model):
 
     def get_cost(self):
         return self.price * self.quantity
+
+class Address(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='addresses')
+    street = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
+    zip_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.street}, {self.city}"
+
+class Payment(models.Model):
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment')
+    payment_date = models.DateTimeField(auto_now_add=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    method = models.CharField(max_length=50, choices=[('cash', 'Cash'), ('card', 'Card'), ('online', 'Online')])
+    status = models.CharField(max_length=50, choices=[('paid', 'Paid'), ('pending', 'Pending'), ('failed', 'Failed')])
+
+    def __str__(self):
+        return f"Payment {self.id} - {self.status}"

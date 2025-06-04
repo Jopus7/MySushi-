@@ -1,0 +1,13 @@
+{% extends 'menu.html' %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h2>Dodaj nowy adres</h2>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-success">Zapisz adres</button>
+    </form>
+    <a href="{% url 'sushi:order_create' %}" class="btn btn-link mt-2">Wróć do zamówienia</a>
+  </div>
+{% endblock %}

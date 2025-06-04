@@ -1,28 +1,47 @@
 {% extends 'menu.html' %}
-{%  load crispy_forms_tags %}
-
-{% block title %}
-    Order
-
-{% endblock %}
 {% block content %}
-    <h1>Order</h1>
-     <div class="order-info">
-    <h3>Your order</h3>
-    <ul>
-      {% for item in cart %}
-        <li>
-          {{ item.quantity }}x {{ item.product.name }}
-          <span>${{ item.total_price }}</span>
-        </li>
-      {% endfor %}
-    </ul>
-    <p>Total: ${{ cart.get_total_price }} zł</p>
-  </div>
 
-  <form method="post" class="order-form">
-    {{ form|crispy }}
-    <p><input type="submit" value="Place order"></p>
-    {% csrf_token %}
-  </form>
+<h2>Składanie zamówienia</h2>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <p>
+    <a href="{% url 'sushi:add_address' %}" class="btn btn-outline-primary btn-sm ms-2">
+      Dodaj nowy adres
+    </a>
+  </p>
+  <h3>Podsumowanie koszyka</h3>
+  {% if items %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Produkt</th>
+          <th>Ilość</th>
+          <th>Cena</th>
+          <th>Razem</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td>{{ item.product.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.product.price }} zł</td>
+            <td>{{ item.get_cost }} zł</td>
+          </tr>
+        {% endfor %}
+        <tr>
+          <td colspan="3"><strong>Suma:</strong></td>
+          <td><strong>{{ total_cost }} zł</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  {% else %}
+    <p>Koszyk jest pusty.</p>
+  {% endif %}
+
+  <button type="submit" class="btn btn-success">Złóż zamówienie</button>
+</form>
+
 {% endblock %}

@@ -40,7 +40,17 @@
                           {{ cart.get_total_price }} zł
                       </a>
                   {% else %}
-                      Your cart is empty.
+                      <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'sushi:cart_detail' %}">
+                          🛒 Koszyk:
+                          {% if cart_items_count > 0 %}
+                            {{ cart_items_count }} produkt{{ cart_items_count|pluralize }},
+                            {{ cart_total_cost }} zł
+                          {% else %}
+                            pusty
+                          {% endif %}
+                        </a>
+                      </li>
                   {% endif %}
               {% endwith %}
           </a>

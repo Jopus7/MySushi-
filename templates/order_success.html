@@ -1,0 +1,9 @@
+{% extends 'menu.html' %}
+
+{% block content %}
+  <div class="container mt-5 text-center">
+    <h2>Dziękujemy za zamówienie! 🍣</h2>
+    <p>Twoje zamówienie zostało pomyślnie złożone.</p>
+    <a href="{% url 'sushi:product_list' %}" class="btn btn-primary mt-3">Wróć do menu</a>
+  </div>
+{% endblock %}
