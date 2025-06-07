@@ -3,7 +3,7 @@ from django.conf import settings
 from sushi.models import Product
 
 
-class Cart(object):
+class SessionCart(object):
 
     def __init__(self, request):
 
@@ -51,7 +51,6 @@ class Cart(object):
         self.save()
 
     def save(self):
-        # mark the session as "modified" to make sure it gets saved
         self.session.modified = True
 
     def remove(self, product):

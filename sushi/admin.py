@@ -1,14 +1,15 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Category, Product, Cart, Order, OrderItem, CustomUser
+from .models import (
+    Category, Product, Cart, CartItem, Order, OrderItem,
+    CustomUser, Address, Payment
+)
 from .forms import CustomUserCreationForm, CustomUserChangeForm
-
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'slug']
     prepopulated_fields = {'slug': ('name',)}
-
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -17,34 +18,46 @@ class ProductAdmin(admin.ModelAdmin):
     list_editable = ['price', 'available']
     prepopulated_fields = {'slug': ('name',)}
 
+class CartItemInLine(admin.TabularInline):
+    model = CartItem
+    extra = 0
+    raw_id_fields = ['product']
 
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
-    list_display = []
+    list_display = ['id', 'user', 'created_at']
+    inlines = [CartItemInLine]
 
+@admin.register(CartItem)
+class CartItemAdmin(admin.ModelAdmin):
+    list_display = ['cart', 'product', 'quantity']
 
+# Zamówienia
 class OrderItemInLine(admin.TabularInline):
     model = OrderItem
     raw_id_fields = ['product']
 
-
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['user', 'id', 'table_number', 'delivered', 'paid', 'created', ]
+    list_display = ['user', 'id', 'delivered', 'paid', 'created']
     list_filter = ['paid', 'created']
     list_editable = ['delivered', 'paid']
     inlines = [OrderItemInLine]
-
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ['order', 'product', 'quantity']
     list_editable = ['quantity']
 
+@admin.register(Address)
+class AddressAdmin(admin.ModelAdmin):
+    list_display = ['user', 'street', 'city', 'zip_code', 'country']
+    list_filter = ['city', 'country']
 
-
-
-
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ['order', 'amount', 'method', 'status', 'payment_date']
+    list_filter = ['status', 'method', 'payment_date']
 
 class CustomUserAdmin(UserAdmin):
     add_form = CustomUserCreationForm
@@ -59,6 +72,4 @@ class CustomUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + ((None, {"fields": ("age",)}),)
     add_fieldsets = UserAdmin.add_fieldsets + ((None, {"fields": ("age",)}),)
 
-
 admin.site.register(CustomUser, CustomUserAdmin)
-

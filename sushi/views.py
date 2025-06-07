@@ -1,15 +1,16 @@
-
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm
 from django.urls import reverse_lazy
 from django.views import View
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-from django.views.generic import CreateView, TemplateView, DetailView, ListView, UpdateView, DeleteView
-from .forms import CustomUserCreationForm, CartAddProductForm, OrderCreateForm
-from .models import Product, Category, Cart, OrderItem
-from .cart import Cart
+from django.views.generic import CreateView, TemplateView
+from .forms import CustomUserCreationForm, CartAddProductForm, OrderCreateForm, AddressForm
+from .models import Product, Category, Cart, CartItem, OrderItem, Order, Payment
 
+class HomeView(TemplateView):
+    template_name = 'home.html'
 
 def product_list(request, category_slug=None):
     category = None
@@ -26,7 +27,7 @@ def product_list(request, category_slug=None):
 
 
 def product_detail(request, id):
-    product = get_object_or_404(Product, id=id,  available=True)
+    product = get_object_or_404(Product, id=id, available=True)
     cart_product_form = CartAddProductForm()
     return render(request, 'product_detail.html', {
         'product': product,
@@ -35,65 +36,100 @@ def product_detail(request, id):
 
 
 @require_POST
+@login_required
 def cart_add(request, product_id):
-    if request.user.is_authenticated:
-
-        cart = Cart(request)
-        product = get_object_or_404(Product, id=product_id)
-        form = CartAddProductForm(request.POST)
-        if form.is_valid():
-            cd = form.cleaned_data
-            cart.add(product=product,
-                     quantity=cd['quantity'],
-                     override_quantity=cd['override'])
-        return redirect('sushi:cart_detail')
-    else:
-        return HttpResponse("Log in to continue")
-
-
-@require_POST
-def cart_remove(request, product_id):
-    cart = Cart(request)
     product = get_object_or_404(Product, id=product_id)
-    cart.remove(product)
+    quantity = int(request.POST.get("quantity", 1))
+    override = request.POST.get("override", "false") == "true"
+
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+
+    if override:
+        if quantity == 0:
+            cart_item.delete()
+        else:
+            cart_item.quantity = quantity
+            cart_item.save()
+    else:
+        cart_item.quantity += quantity
+        cart_item.save()
     return redirect('sushi:cart_detail')
 
 
+@require_POST
+@login_required
+def cart_remove(request, product_id):
+    cart = get_object_or_404(Cart, user=request.user)
+    try:
+        cart_item = CartItem.objects.get(cart=cart, product_id=product_id)
+        cart_item.delete()
+    except CartItem.DoesNotExist:
+        pass
+    return redirect('sushi:cart_detail')
+
+
+@login_required
 def cart_detail(request):
-    cart = Cart(request)
-    for item in cart:
-        item['update_quantity_form'] = CartAddProductForm(initial={'quantity': item['quantity'], 'override': True})
-    return render(request, 'cart_detail.html', {'cart': cart})
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+    items = cart.items.select_related('product')
+
+    if request.method == 'POST':
+        for item in items:
+            quantity = request.POST.get(f'quantity_{item.id}')
+            if quantity:
+                item.quantity = int(quantity)
+                item.save()
+        return redirect('sushi:cart_detail')
+
+    return render(request, 'cart_detail.html', {'cart': cart, 'items': items, 'total_cost': cart.get_total_cost()})
 
 
+@login_required
 def order_create(request):
-    cart = Cart(request)
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+
     if request.method == 'POST':
         form = OrderCreateForm(request.POST)
+        form.fields['delivery_address'].queryset = request.user.addresses.all()
         if form.is_valid():
             order = form.save(commit=False)
             order.user = request.user
             order.save()
-            for item in cart:
-                OrderItem.objects.create(order=order,
 
-                                         product=item['product'],
-                                         price=item['price'],
-                                         quantity=item['quantity'],
+            for item in cart.items.all():
+                OrderItem.objects.create(
+                    order=order,
+                    product=item.product,
+                    quantity=item.quantity,
+                    price=item.product.price
+                )
 
-                                         )
-                cart.clear()
+            # Utwórz obiekt Payment
+            Payment.objects.create(
+                order=order,
+                amount=order.get_total_cost(),
+                method=form.cleaned_data['payment_method'],
+                status='pending'
+            )
 
-            return render(request, 'order_created.html', {
-                                'order': order,
-                            })
+            cart.items.all().delete()
+            return redirect('sushi:order_success')
     else:
         form = OrderCreateForm()
-    return render(request, 'order_create.html', {
-                        'cart': cart,
-                        'form': form,
-                    })
+        form.fields['delivery_address'].queryset = request.user.addresses.all()
 
+    return render(request, 'order_create.html', {
+        'form': form,
+        'items': cart.items.all(),
+        'total_cost': cart.get_total_cost()
+    })
+
+
+@login_required
+def order_success(request):
+    order = Order.objects.filter(user=request.user).latest('created')
+    return render(request, 'order_success.html', {'order': order})
 
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
@@ -101,30 +137,15 @@ class SignUpView(CreateView):
     template_name = 'registration/signup.html'
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+@login_required
+def add_address(request):
+    if request.method == 'POST':
+        form = AddressForm(request.POST)
+        if form.is_valid():
+            address = form.save(commit=False)
+            address.user = request.user
+            address.save()
+            return redirect('sushi:product_list')
+    else:
+        form = AddressForm()
+    return render(request, 'address_form.html', {'form': form})
