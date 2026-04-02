@@ -29,7 +29,7 @@ A web application for ordering food online. The system allows users to browse pr
 git clone https://github.com/Jopus7/MySushi-
 cd MySushi-
 python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
+source venv/bin/activate  
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
