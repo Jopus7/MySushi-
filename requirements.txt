@@ -1,4 +1,8 @@
-asgiref==3.5.2
-Django==3.2.16
+asgiref==3.8.1
+crispy-bootstrap5==2025.4
+Django==4.2.21
+django-crispy-forms==2.4
+psycopg2-binary==2.9.10
 pytz==2022.6
 sqlparse==0.4.3
+typing_extensions==4.14.0
